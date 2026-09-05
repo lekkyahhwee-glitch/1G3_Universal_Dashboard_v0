@@ -611,6 +611,7 @@
         body: JSON.stringify({ action: 'fetch' })
       });
       const data = await res.json();
+      if(sampleModeActive) return; // sample mode was switched on while this request was in flight — discard it
       if(data.ok){
         allRows = data.rows || [];
         rebuildDynamicSkillMeta();
