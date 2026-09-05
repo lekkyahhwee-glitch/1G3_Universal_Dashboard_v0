@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1G3 Class Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#15172B;
+    --paper:#FFEEF3;
+    --panel:#FFFFFF;
+    --panel-dim:#FCDCE7;
+    --coral:#FF6552;
+    --mint:#15B294;
+    --gold:#FFB627;
+    --violet:#7A6FF0;
+    --line:rgba(21,23,43,0.10);
+    --red:#E8523F;
+    --red-bg:#FBDCD8;
+    --amber:#D98C00;
+    --amber-bg:#FBEBC9;
+    --green:#0F9C6E;
+    --green-bg:#D9F2E7;
+    --font-display:'Space Grotesk', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'JetBrains Mono', monospace;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    font-family:var(--font-body); color:var(--ink); background:var(--paper);
+    min-height:100vh; padding-bottom:4rem;
+  }
+  h1,h2,h3,h4{ font-family:var(--font-display); font-weight:800; letter-spacing:-0.01em; line-height:1.15; }
+  .wrap{ max-width:1080px; margin:0 auto; padding:0 5vw; }
+
+  /* ---------- Header ---------- */
+  .dash-header{ padding:1.6rem 0 1.2rem; border-bottom:1px solid var(--line); }
+  .dash-title-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+  .dash-title{ font-size:clamp(1.4rem,3vw,1.9rem); }
+  .dash-sub{ font-family:var(--font-mono); font-size:0.8rem; opacity:0.65; margin-top:0.3rem; }
+  .present-toggle{
+    font-family:var(--font-display); font-weight:700; font-size:0.85rem; background:var(--ink); color:#fff;
+    border:none; border-radius:10px; padding:0.65rem 1.1rem; cursor:pointer; white-space:nowrap;
+  }
+  .present-toggle:hover{ opacity:0.88; }
+
+  .session-bar{ display:flex; align-items:center; gap:0.9rem; flex-wrap:wrap; margin-top:1.1rem; }
+  .session-code-display{
+    font-family:var(--font-mono); font-weight:700; font-size:1.5rem; letter-spacing:0.12em;
+    background:var(--panel); border:2px solid var(--coral); border-radius:12px; padding:0.5rem 1rem; color:var(--coral);
+  }
+  .session-code-display.none{ color:var(--ink); opacity:0.4; border-color:var(--line); font-size:1rem; letter-spacing:normal; }
+  .session-btn{
+    font-family:var(--font-body); font-weight:600; font-size:0.85rem; background:var(--panel); color:var(--ink);
+    border:1px solid var(--line); border-radius:10px; padding:0.6rem 1rem; cursor:pointer;
+  }
+  .session-btn:hover{ border-color:var(--coral); }
+  .session-btn.primary{ background:var(--coral); color:#fff; border-color:var(--coral); }
+  .session-join{ display:flex; align-items:center; gap:0.4rem; }
+  .session-join input{
+    font-family:var(--font-mono); font-size:0.9rem; padding:0.55rem 0.7rem; border-radius:8px; border:1px solid var(--line);
+    width:110px; background:var(--panel);
+  }
+  .session-join select{
+    font-family:var(--font-mono); font-size:0.85rem; padding:0.5rem 0.6rem; border-radius:8px; border:1px solid var(--line);
+    background:var(--panel); color:var(--ink); max-width:220px;
+  }
+  .live-poll-note{ font-family:var(--font-mono); font-size:0.72rem; opacity:0.55; }
+
+  /* ---------- Sections ---------- */
+  .section{ margin-top:2.2rem; }
+  .section-title{ font-size:1.15rem; display:flex; align-items:center; gap:0.5rem; margin-bottom:0.9rem; }
+  .section-note{ font-family:var(--font-mono); font-size:0.75rem; opacity:0.6; margin-bottom:0.9rem; margin-top:-0.5rem; }
+  .card{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:1.3rem 1.4rem; }
+
+  /* ---------- Gap bar chart ---------- */
+  .gap-row{ display:flex; align-items:center; gap:0.8rem; padding:0.55rem 0; }
+  .gap-row:not(:last-child){ border-bottom:1px solid var(--line); }
+  .gap-label{ width:180px; flex-shrink:0; font-size:0.88rem; font-weight:600; }
+  .gap-track{ flex:1; height:20px; background:var(--panel-dim); border-radius:20px; overflow:hidden; position:relative; }
+  .gap-fill{ height:100%; border-radius:20px; transition:width 0.6s cubic-bezier(.22,.68,0,1.01); }
+  .gap-fill.red{ background:var(--red); }
+  .gap-fill.amber{ background:var(--amber); }
+  .gap-fill.green{ background:var(--green); }
+  .gap-pct{ width:48px; flex-shrink:0; text-align:right; font-family:var(--font-mono); font-size:0.85rem; font-weight:700; }
+  .empty-state{ text-align:center; padding:1.4rem; opacity:0.6; font-size:0.9rem; }
+
+  /* ---------- Review cards ---------- */
+  .review-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:1rem; }
+  .review-card{ border-radius:14px; padding:1.2rem 1.3rem; border:1px solid var(--line); }
+  .review-card.red{ background:var(--red-bg); border-color:rgba(232,82,63,0.3); }
+  .review-card.amber{ background:var(--amber-bg); border-color:rgba(217,140,0,0.3); }
+  .review-card-title{ font-family:var(--font-display); font-weight:800; font-size:1rem; margin-bottom:0.7rem; }
+  .review-formula-badge{
+    display:inline-block; font-family:var(--font-mono); font-weight:800; font-size:1.15rem; background:var(--ink); color:#fff;
+    border-radius:8px; padding:0.35rem 0.7rem; margin-bottom:0.8rem;
+  }
+  .review-steps{ font-size:0.85rem; line-height:1.7; padding-left:1.1rem; }
+  .review-steps li{ margin-bottom:0.2rem; }
+  .review-worked{ margin-top:0.9rem; padding-top:0.8rem; border-top:1px dashed rgba(21,23,43,0.18); }
+  .review-card.red .review-worked{ border-top-color:rgba(232,82,63,0.45); }
+  .review-card.amber .review-worked{ border-top-color:rgba(217,140,0,0.45); }
+  .review-worked-label{ font-family:var(--font-mono); font-size:0.68rem; text-transform:uppercase; letter-spacing:0.05em; opacity:0.65; margin-bottom:0.4rem; }
+  .review-worked-prompt{ font-size:0.86rem; font-weight:600; margin-bottom:0.5rem; }
+  .review-worked-steps{ font-family:var(--font-mono); font-size:0.8rem; line-height:1.65; white-space:pre-line; background:rgba(21,23,43,0.06); border-radius:8px; padding:0.6rem 0.75rem; }
+
+  /* ---------- Walk-from-origin animated demo (embedded in review cards + skill chips) ---------- */
+  .wd-block{ margin-top:0.7rem; }
+  .wd-svg-wrap{ background:var(--ink); border-radius:10px; padding:0.4rem; max-width:220px; }
+  .wd-svg-wrap svg{ width:100%; height:auto; display:block; }
+  .wd-play-btn{
+    font-family:var(--font-display); font-weight:700; font-size:0.74rem; background:var(--ink); color:#fff;
+    border:none; border-radius:8px; padding:0.4rem 0.7rem; cursor:pointer; margin-top:0.5rem;
+  }
+  .wd-caption{ font-family:var(--font-mono); font-size:0.68rem; background:rgba(21,23,43,0.06); border-radius:6px; padding:0.4rem 0.55rem; margin-top:0.4rem; min-height:2.2em; }
+  .wd-pulsing{ animation: wdPulse 1.6s ease-out infinite; }
+  @keyframes wdPulse{
+    0%{ filter:drop-shadow(0 0 0px rgba(94,200,250,0.9)); }
+    50%{ filter:drop-shadow(0 0 6px rgba(94,200,250,0.9)); }
+    100%{ filter:drop-shadow(0 0 0px rgba(94,200,250,0.9)); }
+  }
+  @keyframes wdRing{
+    0%{ r:5; stroke-width:2.5; opacity:0.9; }
+    100%{ r:14; stroke-width:0.5; opacity:0; }
+  }
+  .wd-ring-play{ animation: wdRing 0.7s ease-out; }
+  .review-all-good{
+    background:var(--green-bg); border:1px solid rgba(15,156,110,0.3); border-radius:14px; padding:1.3rem 1.4rem;
+    text-align:center; font-size:0.95rem; font-weight:600; color:var(--green);
+  }
+
+  /* ---------- Live tracker table ---------- */
+  .tracker-table{ width:100%; border-collapse:collapse; font-size:0.86rem; }
+  .tracker-table th{
+    text-align:left; font-family:var(--font-mono); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em;
+    opacity:0.6; padding:0.5rem 0.6rem; cursor:pointer; user-select:none; white-space:nowrap;
+  }
+  .tracker-table th:hover{ opacity:1; color:var(--coral); }
+  .tracker-table th .sort-arrow{ font-size:0.65rem; margin-left:0.2rem; opacity:0.6; }
+  .tracker-table td{ padding:0.65rem 0.6rem; border-top:1px solid var(--line); }
+  .tracker-row{ cursor:pointer; }
+  .tracker-row:hover{ background:var(--panel-dim); }
+  .tracker-row.idle{ opacity:0.55; }
+  .rank-medal{ font-size:1.05rem; }
+  .status-dot{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:0.4rem; }
+  .status-dot.active{ background:var(--mint); }
+  .status-dot.idle{ background:var(--line); border:1px solid rgba(21,23,43,0.3); }
+  .rush-badge{ font-size:0.9rem; margin-left:0.3rem; }
+  .skill-breakdown-row td{ padding:0; border-top:none; }
+  .skill-breakdown{ background:var(--panel-dim); border-radius:10px; padding:0.9rem 1rem; margin:0.3rem 0 0.7rem; display:none; }
+  .skill-breakdown.show{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:0.6rem; }
+  .skill-chip{ background:var(--panel); border-radius:8px; padding:0.5rem 0.7rem; font-size:0.78rem; border-left:4px solid var(--line); }
+  .skill-chip.red{ border-left-color:var(--red); }
+  .skill-chip.amber{ border-left-color:var(--amber); }
+  .skill-chip.green{ border-left-color:var(--green); }
+  .skill-chip-title{ font-weight:700; margin-bottom:0.15rem; }
+  .skill-chip-worked{ margin-top:0.55rem; padding-top:0.5rem; border-top:1px dashed rgba(21,23,43,0.18); }
+  .skill-chip.red .skill-chip-worked{ border-top-color:rgba(232,82,63,0.45); }
+  .skill-chip.amber .skill-chip-worked{ border-top-color:rgba(217,140,0,0.45); }
+  .skill-chip-worked-label{ font-family:var(--font-mono); font-size:0.63rem; text-transform:uppercase; letter-spacing:0.04em; opacity:0.65; margin-bottom:0.3rem; }
+  .skill-chip-worked-prompt{ font-weight:600; margin-bottom:0.35rem; }
+  .skill-chip-worked-steps{ font-family:var(--font-mono); font-size:0.72rem; line-height:1.55; white-space:pre-line; background:rgba(21,23,43,0.06); border-radius:6px; padding:0.45rem 0.55rem; }
+  .attempt-history{ grid-column:1 / -1; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:0.6rem 0.7rem; }
+  .attempt-history-title{ font-family:var(--font-mono); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em; opacity:0.65; margin-bottom:0.4rem; }
+  .attempt-history-item{ display:flex; align-items:center; gap:0.6rem; font-size:0.8rem; padding:0.3rem 0; border-top:1px solid var(--line); }
+  .attempt-history-item:first-of-type{ border-top:none; }
+  .attempt-history-item .ah-tag{ font-family:var(--font-mono); font-weight:700; font-size:0.68rem; background:var(--panel-dim); border-radius:6px; padding:0.15rem 0.5rem; flex-shrink:0; min-width:38px; text-align:center; }
+  .attempt-history-item .ah-score{ font-weight:600; }
+  .attempt-history-item .ah-date{ margin-left:auto; font-family:var(--font-mono); font-size:0.72rem; opacity:0.6; }
+
+  /* ---------- Support / rushing panels ---------- */
+  .flag-list{ display:flex; flex-direction:column; gap:0.6rem; }
+  .flag-item{ display:flex; align-items:center; justify-content:space-between; gap:0.8rem; background:var(--panel-dim); border-radius:10px; padding:0.7rem 0.9rem; font-size:0.86rem; }
+  .flag-item .fi-name{ font-weight:700; }
+  .flag-item .fi-detail{ font-family:var(--font-mono); font-size:0.78rem; opacity:0.75; }
+  .flag-item .fi-left{ display:flex; align-items:center; gap:0.7rem; flex:1; min-width:0; }
+  .fi-help-btn{
+    font-family:var(--font-display); font-weight:700; font-size:0.76rem; background:var(--green); color:#fff;
+    border:none; border-radius:8px; padding:0.4rem 0.7rem; cursor:pointer; white-space:nowrap; flex-shrink:0;
+  }
+  .fi-help-btn:hover{ opacity:0.85; }
+  .fi-recovered{ font-family:var(--font-mono); font-size:0.72rem; color:var(--green); font-weight:700; }
+
+  /* ---------- Manage log ---------- */
+  .manage-student{ border:1px solid var(--line); border-radius:10px; margin-bottom:0.6rem; overflow:hidden; }
+  .manage-student-head{ display:flex; align-items:center; justify-content:space-between; padding:0.7rem 0.9rem; cursor:pointer; background:var(--panel); }
+  .manage-student-head:hover{ background:var(--panel-dim); }
+  .manage-student-rows{ display:none; border-top:1px solid var(--line); }
+  .manage-student-rows.show{ display:block; }
+  .manage-row{ display:flex; align-items:center; justify-content:space-between; padding:0.5rem 0.9rem; font-size:0.8rem; font-family:var(--font-mono); border-top:1px solid var(--line); }
+  .manage-row:first-child{ border-top:none; }
+  .manage-del-btn{ background:var(--red-bg); color:var(--red); border:none; border-radius:6px; padding:0.25rem 0.6rem; cursor:pointer; font-size:0.75rem; }
+
+  .clear-session-btn{
+    font-family:var(--font-display); font-weight:700; background:var(--red); color:#fff; border:none; border-radius:10px;
+    padding:0.7rem 1.2rem; cursor:pointer; margin-top:1rem;
+  }
+
+  /* ---------- Modal ---------- */
+  .modal-overlay{ position:fixed; inset:0; background:rgba(21,23,43,0.55); display:none; align-items:center; justify-content:center; z-index:600; padding:6vw; }
+  .modal-overlay.show{ display:flex; }
+  .modal-card{ background:var(--panel); border-radius:14px; padding:1.6rem 1.5rem; max-width:380px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.25); }
+  .modal-card h3{ font-size:1.05rem; margin-bottom:0.6rem; }
+  .modal-card p{ font-size:0.86rem; line-height:1.5; opacity:0.8; margin-bottom:0.9rem; }
+  .modal-card input{ width:100%; padding:0.6rem 0.8rem; border-radius:8px; border:1px solid var(--line); font-family:var(--font-mono); margin-bottom:1rem; }
+  .modal-actions{ display:flex; gap:0.7rem; justify-content:flex-end; }
+  .modal-btn{ padding:0.55rem 1rem; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer; border:1px solid var(--line); background:transparent; }
+  .modal-btn.danger{ background:var(--red); border-color:var(--red); color:#fff; }
+  .modal-btn.danger:disabled{ opacity:0.4; cursor:not-allowed; }
+
+  /* ---------- Present Mode ---------- */
+  body.present-mode{ background:var(--ink); color:#fff; }
+  body.present-mode .teacher-only{ display:none !important; }
+  body.present-mode .dash-header{ border-color:rgba(255,255,255,0.14); }
+  body.present-mode .dash-sub{ opacity:0.55; }
+  body.present-mode .card{ background:#1F2140; border-color:rgba(255,255,255,0.12); }
+  body.present-mode .gap-track{ background:rgba(255,255,255,0.08); }
+  body.present-mode .gap-label{ font-size:1.05rem; width:220px; }
+  body.present-mode .gap-pct{ font-size:1.05rem; }
+  body.present-mode .section-title{ font-size:1.5rem; }
+  body.present-mode .review-card.red{ background:rgba(232,82,63,0.18); border-color:rgba(232,82,63,0.4); }
+  body.present-mode .review-card.amber{ background:rgba(217,140,0,0.18); border-color:rgba(217,140,0,0.4); }
+  body.present-mode .review-card-title{ font-size:1.15rem; }
+  body.present-mode .review-steps{ font-size:1rem; }
+  body.present-mode .review-worked{ border-top-color:rgba(255,255,255,0.2); }
+  body.present-mode .review-worked-label{ font-size:0.8rem; opacity:0.75; }
+  body.present-mode .review-worked-prompt{ font-size:1.1rem; }
+  body.present-mode .review-worked-steps{ font-size:1rem; background:rgba(255,255,255,0.08); }
+  body.present-mode .wd-svg-wrap{ max-width:280px; }
+  body.present-mode .wd-caption{ font-size:0.85rem; background:rgba(255,255,255,0.08); }
+  body.present-mode .wd-play-btn{ background:#fff; color:var(--ink); font-size:0.85rem; padding:0.5rem 0.9rem; }
+  body.present-mode .review-formula-badge{ font-size:1.4rem; background:#fff; color:var(--ink); }
+  body.present-mode .review-all-good{ background:rgba(15,156,110,0.18); border-color:rgba(15,156,110,0.4); font-size:1.2rem; padding:2rem; }
+  body.present-mode .present-toggle{ background:#fff; color:var(--ink); }
+
+  @media (max-width:640px){
+    .gap-label{ width:120px; font-size:0.78rem; }
+    .tracker-table{ font-size:0.76rem; }
+    .tracker-table th, .tracker-table td{ padding:0.45rem 0.35rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="dash-header">
+    <div class="dash-title-row">
+      <div>
+        <h1 class="dash-title">📊 1G3 Class Tracker</h1>
+        <div class="dash-sub" id="dashSub">Live results from the class</div>
+      </div>
+      <button class="present-toggle teacher-only" id="presentToggle">🖥️ Present to Class</button>
+      <button class="present-toggle" id="exitPresentToggle" style="display:none; background:var(--coral); color:#fff;">✕ Exit Present Mode</button>
+    </div>
+    <div class="session-bar teacher-only">
+      <span id="sessionCodeDisplay" class="session-code-display none">No active session</span>
+      <button class="session-btn primary" id="newSessionBtn">Start New Session</button>
+      <div class="session-join">
+        <input type="text" id="joinSessionInput" placeholder="or enter code" maxlength="6" inputmode="numeric">
+        <button class="session-btn" id="joinSessionBtn">Use code</button>
+      </div>
+      <div class="session-join">
+        <span style="font-family:var(--font-mono); font-size:0.76rem; opacity:0.6;">Game:</span>
+        <select id="gameFilterSelect"><option value="">— no data yet —</option></select>
+      </div>
+      <span class="live-poll-note" id="pollStatus">Polling every 5s…</span>
+      <button class="session-btn" id="loadSampleBtn" style="margin-left:auto;">🎨 Load Sample Data</button>
+    </div>
+  </div>
+
+  <!-- CLASS LEARNING GAPS -->
+  <div class="section">
+    <h2 class="section-title">📈 Class Learning Gaps</h2>
+    <div class="section-note">% of students with a gap (wrong answer, or needed 2 attempts) in each skill this session</div>
+    <div class="card" id="gapChartCard"><div class="empty-state">Waiting for data…</div></div>
+  </div>
+
+  <!-- WHAT THE CLASS SHOULD REVIEW -->
+  <div class="section">
+    <h2 class="section-title">📚 What The Class Should Review</h2>
+    <div id="reviewSection"><div class="empty-state">Waiting for data…</div></div>
+  </div>
+
+  <!-- LIVE CLASS TRACKER -->
+  <div class="section teacher-only">
+    <h2 class="section-title">🧑‍🤝‍🧑 Live Class Tracker</h2>
+    <div class="section-note">Click a column header to sort · click a student row to see their skill breakdown</div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="tracker-table" id="trackerTable">
+        <thead>
+          <tr>
+            <th data-sort="rank">Rank</th>
+            <th data-sort="student">Student <span class="sort-arrow" id="arrow-student"></span></th>
+            <th data-sort="score">Latest Score <span class="sort-arrow" id="arrow-score">▼</span></th>
+            <th data-sort="firstTry">1st-Try Rate <span class="sort-arrow" id="arrow-firstTry"></span></th>
+            <th data-sort="time">Time <span class="sort-arrow" id="arrow-time"></span></th>
+            <th data-sort="status">Status <span class="sort-arrow" id="arrow-status"></span></th>
+          </tr>
+        </thead>
+        <tbody id="trackerBody">
+          <tr><td colspan="6" class="empty-state">Waiting for data…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- NEEDS SUPPORT -->
+  <div class="section teacher-only">
+    <h2 class="section-title">🤝 Students Who May Need Support</h2>
+    <div class="section-note">Anyone who drops under 60% correct gets added here and stays — even if they improve — until you mark them helped</div>
+    <div class="card" id="supportCard"><div class="empty-state">No one flagged yet.</div></div>
+  </div>
+
+  <!-- POSSIBLY RUSHING -->
+  <div class="section teacher-only">
+    <h2 class="section-title">⚡ Possibly Rushing</h2>
+    <div class="section-note">Averaging under 10 seconds/question, with at least 3 questions answered — fastest first</div>
+    <div class="card" id="rushCard"><div class="empty-state">No one flagged yet.</div></div>
+  </div>
+
+  <!-- UNASSIGNED ATTEMPTS -->
+  <div class="section teacher-only">
+    <h2 class="section-title">❓ Unassigned Attempts</h2>
+    <div class="section-note">Logged with no session code (the field is optional for students) — not shown anywhere else</div>
+    <div class="card" id="unassignedCard"><div class="empty-state">None.</div></div>
+  </div>
+
+  <!-- MANAGE LOG ENTRIES -->
+  <div class="section teacher-only">
+    <h2 class="section-title">🗂️ Manage Log Entries</h2>
+    <div id="manageSection"><div class="empty-state">Waiting for data…</div></div>
+    <button class="clear-session-btn" id="clearSessionBtn">Clear This Session</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="clearModal">
+  <div class="modal-card">
+    <h3>Clear this session's data?</h3>
+    <p>This permanently deletes every logged attempt for session <strong id="clearModalSession"></strong>. Other sessions sharing this backend are untouched. Type <strong>CLEAR</strong> below to confirm.</p>
+    <input type="text" id="clearConfirmInput" placeholder="Type CLEAR">
+    <div class="modal-actions">
+      <button class="modal-btn" id="clearCancelBtn">Cancel</button>
+      <button class="modal-btn danger" id="clearConfirmBtn" disabled>Clear Session</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Paste your deployed Apps Script Web App URL here (see setup-instructions.md) — this should be
+  // the ONE shared 1G3 backend, reused by every future 1G3 game/deck.
+  const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbz3MPuRj-E_Gt1DbmscTAKernT7bis-N6_akgCE4Cek5NdnZrZUnO1WHL4cfbw-GjnI/exec';
+
+  const SESSION_STORAGE_KEY = '1g3_dashboard_session';
+
+  // Last-resort readable label for a skill key that has no entry in skillMeta below —
+  // e.g. "wordToEquation" -> "Word To Equation" — so the dashboard never shows a raw
+  // lowercase code like "stmteq" to a teacher or on the Present Mode screen.
+  function friendlySkillName(key){
+    if(!key) return 'Other';
+    const spaced = String(key).replace(/[_-]+/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2');
+    return spaced.replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  const skillMeta = {
+    'cart': { title: 'Coordinates &amp; Quadrants', badge: '(x, y)', steps: [
+      'Locate the origin (0, 0).',
+      "Count left/right from the origin — that's x.",
+      "Count up/down from the origin — that's y.",
+      'Check the sign pattern against the 4 quadrants.'
+    ], workedPrompt: 'Which quadrant is the point (−5, 4) in?', workedSteps: [
+      'x = −5 → negative', 'y = 4 → positive', '(−, +) is Quadrant II'
+    ]},
+    'coordx': { title: 'Plotting &amp; Reading Individual Points', badge: '(x, y)', hasWalkDemo: true, steps: [
+      'Start at the origin every time.',
+      'Move left/right first for x, then up/down for y.',
+      'Reading a point works the same way, just in reverse.'
+    ], workedPrompt: 'State the coordinates of a point that is 5 left and 2 down from the origin.', workedSteps: [
+      '5 left → x = −5', '2 down → y = −2', 'Coordinates: (−5, −2)'
+    ]},
+    'hunt': { title: 'Reading Coordinates in Context', badge: '(x, y)', steps: [
+      'Treat any labelled point the same as a plain coordinate.',
+      'Count across from the origin first, then up or down.',
+      'Match the ordered pair to its label, or vice versa.'
+    ], workedPrompt: 'A stall is 4 units left and 3 units up from the entrance. What are its coordinates?', workedSteps: [
+      '4 left → x = −4', '3 up → y = 3', 'Coordinates: (−4, 3)'
+    ]},
+    'plotb': { title: 'Plotting a Linear Relation', badge: 'y = mx + c', steps: [
+      'Plot every point from the table the same way, one at a time.',
+      'Join the points with a ruler.',
+      'Points from the same linear relation always form a straight line — a kink means a plotting mistake.'
+    ], workedPrompt: 'Do the points (−2, −4), (0, 0), (1, 2) line up into a straight line?', workedSteps: [
+      'Plot each point.', 'From (−2,−4) to (0,0): x up 2, y up 4.', 'From (0,0) to (1,2): x up 1, y up 2.', 'Same rate both times → yes, straight line.'
+    ]},
+    'func': { title: 'The Concept of a Function', badge: 'f(x)', steps: [
+      'One input must always give exactly one output.',
+      'A vertical line on a graph fails this test — one x-value crosses it more than once.',
+      'A constant relation (like y = 7) is still a function — every x gives the same one output.'
+    ], workedPrompt: 'For f(x) = 3x + 1, find f(2).', workedSteps: [
+      'f(2) = 3(2) + 1', 'f(2) = 6 + 1', 'f(2) = 7'
+    ]},
+    'stmteq': { title: 'Words &rarr; Equation', badge: 'y = mx + c', steps: [
+      'Build the multiple of x first (e.g. "five times x" → 5x).',
+      'Then apply the add/subtract on top of that whole thing.',
+      '"Less than" and "more than" attach to the multiple of x, not to x on its own.'
+    ], workedPrompt: 'Express as an equation: "y is 3 less than five times x".', workedSteps: [
+      '"Five times x" → 5x', '"3 less than" that → subtract 3', 'y = 5x − 3'
+    ]},
+    'linear': { title: 'The Equation of a Line (y = mx + c)', badge: 'y = mx + c', steps: [
+      'm is the gradient, c is the y-intercept.',
+      'If the equation isn\'t already in y = mx + c form, rearrange it first.',
+      'Never read m and c straight off an equation that\'s still tangled up.'
+    ], workedPrompt: 'Rearrange 2y = 6x + 8 into y = mx + c form. What are m and c?', workedSteps: [
+      '2y = 6x + 8', 'Divide every term by 2:', 'y = 3x + 4', 'm = 3, c = 4'
+    ]}
+  };
+
+  // ---------- Walk-from-origin animated demo (shared by review cards + skill chips) ----------
+  // Demonstrates plotting (4, 3): walk right along the x-axis to x=4, then up to y=3.
+  const WD_GRID_MAX = 10;
+  function wdToX(x){ return 175 + x*15; }
+  function wdToY(y){ return 175 - y*15; }
+  function wdAxesHTML(){
+    let html = '';
+    for(let i=-WD_GRID_MAX;i<=WD_GRID_MAX;i++){
+      html += `<line x1="${wdToX(i)}" y1="${wdToY(-WD_GRID_MAX)}" x2="${wdToX(i)}" y2="${wdToY(WD_GRID_MAX)}" stroke="currentColor" stroke-width="1" opacity="0.08"/>`;
+      html += `<line x1="${wdToX(-WD_GRID_MAX)}" y1="${wdToY(i)}" x2="${wdToX(WD_GRID_MAX)}" y2="${wdToY(i)}" stroke="currentColor" stroke-width="1" opacity="0.08"/>`;
+    }
+    html += `<line x1="${wdToX(-WD_GRID_MAX)}" y1="${wdToY(0)}" x2="${wdToX(WD_GRID_MAX)}" y2="${wdToY(0)}" stroke="currentColor" stroke-width="1.6" opacity="0.75"/>`;
+    html += `<line x1="${wdToX(0)}" y1="${wdToY(-WD_GRID_MAX)}" x2="${wdToX(0)}" y2="${wdToY(WD_GRID_MAX)}" stroke="currentColor" stroke-width="1.6" opacity="0.75"/>`;
+    return html;
+  }
+  function walkDemoHTML(uid){
+    return `<div class="wd-block">
+      <div class="wd-svg-wrap"><svg viewBox="0 0 350 350" id="wd-${uid}-svg">
+        <g>${wdAxesHTML()}</g>
+        <line id="wd-${uid}-trailX" x1="175" y1="175" x2="175" y2="175" stroke="#FFC93C" stroke-width="2.4" stroke-linecap="round" opacity="0"/>
+        <line id="wd-${uid}-trailY" x1="235" y1="175" x2="235" y2="175" stroke="#FF4FA3" stroke-width="2.4" stroke-linecap="round" opacity="0"/>
+        <text id="wd-${uid}-labelX" x="205" y="164" text-anchor="middle" font-size="11" font-weight="700" fill="#FFC93C" opacity="0" font-family="'JetBrains Mono',monospace">x = 4</text>
+        <text id="wd-${uid}-labelY" x="255" y="153" text-anchor="middle" font-size="11" font-weight="700" fill="#FF4FA3" opacity="0" font-family="'JetBrains Mono',monospace">y = 3</text>
+        <circle id="wd-${uid}-origin" cx="175" cy="175" r="4.5" fill="#fff" opacity="0"/>
+        <circle id="wd-${uid}-walker" cx="175" cy="175" r="5.5" fill="#fff" opacity="0"/>
+        <circle id="wd-${uid}-ring" cx="235" cy="130" r="5" fill="none" stroke="#5EC8FA" stroke-width="2" opacity="0"/>
+        <text id="wd-${uid}-labelA" x="245" y="122" font-size="12" font-weight="800" fill="#5EC8FA" opacity="0" font-family="'Space Grotesk',sans-serif">A(4, 3)</text>
+      </svg></div>
+      <button class="wd-play-btn" id="wd-${uid}-btn">▶ Play animation</button>
+      <div class="wd-caption" id="wd-${uid}-caption">Plotting (4, 3) — press play.</div>
+    </div>`;
+  }
+  function initWalkDemo(uid){
+    const btn = document.getElementById(`wd-${uid}-btn`);
+    if(!btn) return;
+    const caption = document.getElementById(`wd-${uid}-caption`);
+    const ORIGIN = { x: wdToX(0), y: wdToY(0) };
+    const TX = wdToX(4), TY = wdToY(3);
+    let rafId = null, timers = [];
+    function clearAll(){ if(rafId) cancelAnimationFrame(rafId); timers.forEach(t=>clearTimeout(t)); timers = []; }
+    function setOp(id, v){ const el = document.getElementById(id); if(el) el.style.opacity = v; }
+    function ease(t){ return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2; }
+    function walk(fx,fy,tx,ty,dur,onFrame,onDone){
+      const start = performance.now();
+      function step(now){
+        const t = Math.min(1, (now-start)/dur);
+        const e = ease(t);
+        onFrame(fx+(tx-fx)*e, fy+(ty-fy)*e);
+        if(t<1){ rafId = requestAnimationFrame(step); } else if(onDone){ onDone(); }
+      }
+      rafId = requestAnimationFrame(step);
+    }
+    function play(){
+      clearAll();
+      [`wd-${uid}-trailX`,`wd-${uid}-trailY`,`wd-${uid}-labelX`,`wd-${uid}-labelY`,`wd-${uid}-origin`,`wd-${uid}-walker`,`wd-${uid}-ring`,`wd-${uid}-labelA`].forEach(id=>setOp(id,0));
+      const walker = document.getElementById(`wd-${uid}-walker`);
+      walker.classList.remove('wd-pulsing');
+      document.getElementById(`wd-${uid}-ring`).classList.remove('wd-ring-play');
+      const trailX = document.getElementById(`wd-${uid}-trailX`);
+      const trailY = document.getElementById(`wd-${uid}-trailY`);
+      walker.setAttribute('cx', ORIGIN.x); walker.setAttribute('cy', ORIGIN.y);
+      trailX.setAttribute('x1', ORIGIN.x); trailX.setAttribute('x2', ORIGIN.x);
+      trailX.setAttribute('y1', ORIGIN.y); trailX.setAttribute('y2', ORIGIN.y);
+      trailY.setAttribute('x1', TX); trailY.setAttribute('x2', TX);
+      trailY.setAttribute('y1', ORIGIN.y); trailY.setAttribute('y2', ORIGIN.y);
+      caption.textContent = 'Plotting the point (4, 3)…';
+      timers.push(setTimeout(()=>{
+        setOp(`wd-${uid}-origin`,1); setOp(`wd-${uid}-walker`,1);
+        caption.textContent = 'Start at the origin (0, 0).';
+      }, 400));
+      timers.push(setTimeout(()=>{
+        caption.textContent = 'x = 4 → move 4 right.';
+        setOp(`wd-${uid}-trailX`,1);
+        walk(ORIGIN.x, ORIGIN.y, TX, ORIGIN.y, 900, (x,y)=>{ walker.setAttribute('cx',x); walker.setAttribute('cy',y); trailX.setAttribute('x2',x); },
+          ()=>{ setOp(`wd-${uid}-labelX`,1); caption.textContent = 'x = 4 ✓'; });
+      }, 1100));
+      timers.push(setTimeout(()=>{
+        caption.textContent = 'y = 3 → move 3 up.';
+        setOp(`wd-${uid}-trailY`,1);
+        walk(TX, ORIGIN.y, TX, TY, 750, (x,y)=>{ walker.setAttribute('cx',x); walker.setAttribute('cy',y); trailY.setAttribute('y2',y); },
+          ()=>{ setOp(`wd-${uid}-labelY`,1); caption.textContent = 'y = 3 ✓'; });
+      }, 2500));
+      timers.push(setTimeout(()=>{
+        walker.classList.add('wd-pulsing');
+        setOp(`wd-${uid}-labelA`,1);
+        const ring = document.getElementById(`wd-${uid}-ring`);
+        ring.style.opacity = 1; ring.classList.add('wd-ring-play');
+        caption.textContent = "That's (4, 3) — the coordinates ARE the path.";
+      }, 3600));
+    }
+    btn.addEventListener('click', play);
+  }
+
+  let allRows = [];
+  let activeSession = localStorage.getItem(SESSION_STORAGE_KEY) || '';
+  let selectedGame = '';
+  let sortState = { col: 'score', dir: 'desc' };
+  let expandedStudents = new Set();
+  let expandedManage = new Set();
+
+  // ---------- Persistent "needs support" flag/dismiss tracking (per session + game) ----------
+  // A student flagged once stays on the list — even if their live stats later improve — until the
+  // teacher explicitly marks them helped. This is deliberate: the point is a checklist of who to go
+  // see, not a live-recalculated snapshot that can silently drop someone the moment they retry a question.
+  const FLAG_STORAGE_KEY = '1g3_dashboard_flags_v1';
+  function loadFlagStore(){
+    try{ return JSON.parse(localStorage.getItem(FLAG_STORAGE_KEY) || '{}'); }catch(e){ return {}; }
+  }
+  function saveFlagStore(store){
+    try{ localStorage.setItem(FLAG_STORAGE_KEY, JSON.stringify(store)); }catch(e){ /* ignore */ }
+  }
+  function flagKey(){ return (activeSession || 'none') + '|' + (selectedGame || 'none'); }
+  function getFlagEntry(){
+    const store = loadFlagStore();
+    const key = flagKey();
+    if(!store[key]) store[key] = { flagged: [], dismissed: [] };
+    return { store, key, entry: store[key] };
+  }
+  function markFlagged(name){
+    const { store, key, entry } = getFlagEntry();
+    if(!entry.flagged.includes(name)) entry.flagged.push(name);
+    store[key] = entry;
+    saveFlagStore(store);
+  }
+  function markDismissed(name){
+    const { store, key, entry } = getFlagEntry();
+    if(!entry.dismissed.includes(name)) entry.dismissed.push(name);
+    store[key] = entry;
+    saveFlagStore(store);
+  }
+  function clearFlagsForSession(session){
+    const store = loadFlagStore();
+    const prefix = (session || 'none') + '|';
+    Object.keys(store).forEach(k => { if(k.startsWith(prefix)) delete store[k]; });
+    saveFlagStore(store);
+  }
+
+  function updateSessionDisplay(){
+    const el = document.getElementById('sessionCodeDisplay');
+    if(activeSession){
+      el.textContent = 'Session: ' + activeSession;
+      el.classList.remove('none');
+    } else {
+      el.textContent = 'No active session';
+      el.classList.add('none');
+    }
+    document.getElementById('clearModalSession').textContent = activeSession || '(none)';
+  }
+  updateSessionDisplay();
+
+  document.getElementById('newSessionBtn').addEventListener('click', () => {
+    const code = String(Math.floor(100000 + Math.random()*900000));
+    activeSession = code;
+    localStorage.setItem(SESSION_STORAGE_KEY, code);
+    updateSessionDisplay();
+    render();
+  });
+  document.getElementById('joinSessionBtn').addEventListener('click', () => {
+    const val = (document.getElementById('joinSessionInput').value || '').trim();
+    if(!val) return;
+    activeSession = val;
+    localStorage.setItem(SESSION_STORAGE_KEY, val);
+    updateSessionDisplay();
+    render();
+  });
+
+  // ---------- Present mode ----------
+  document.getElementById('presentToggle').addEventListener('click', () => {
+    document.body.classList.add('present-mode');
+    document.getElementById('presentToggle').style.display = 'none';
+    document.getElementById('exitPresentToggle').style.display = 'inline-block';
+  });
+  document.getElementById('exitPresentToggle').addEventListener('click', () => {
+    document.body.classList.remove('present-mode');
+    document.getElementById('presentToggle').style.display = 'inline-block';
+    document.getElementById('exitPresentToggle').style.display = 'none';
+  });
+
+  // ---------- Fetch ----------
+  async function fetchRows(){
+    if(!BACKEND_URL || BACKEND_URL.indexOf('PASTE_YOUR') === 0){
+      document.getElementById('pollStatus').textContent = 'Backend not configured yet — paste your Apps Script URL into this file.';
+      return;
+    }
+    try{
+      const res = await fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'fetch' })
+      });
+      const data = await res.json();
+      if(data.ok){
+        allRows = data.rows || [];
+        rebuildDynamicSkillMeta();
+        updateGameFilterOptions();
+        document.getElementById('pollStatus').textContent = 'Last updated ' + new Date().toLocaleTimeString();
+        render();
+      }
+    }catch(err){
+      document.getElementById('pollStatus').textContent = 'Could not reach backend — will retry.';
+    }
+  }
+
+  // ---------- Game filter (multiple games can share this one backend) ----------
+  function updateGameFilterOptions(){
+    const games = Array.from(new Set(allRows.map(r => r.game).filter(Boolean))).sort();
+    const sel = document.getElementById('gameFilterSelect');
+    const prevValue = selectedGame;
+    if(!games.length){
+      sel.innerHTML = '<option value="">— no data yet —</option>';
+      selectedGame = '';
+      return;
+    }
+    sel.innerHTML = games.map(g => `<option value="${g}">${g}</option>`).join('');
+    // keep the teacher's current choice if it's still valid; otherwise default to the first game seen
+    if(prevValue && games.includes(prevValue)){
+      selectedGame = prevValue;
+    } else {
+      selectedGame = games[0];
+    }
+    sel.value = selectedGame;
+    updateDashSub();
+  }
+  function updateDashSub(){
+    document.getElementById('dashSub').textContent = selectedGame
+      ? 'Viewing: ' + selectedGame + ' — live results from the class'
+      : 'Live results from the class';
+  }
+  document.getElementById('gameFilterSelect').addEventListener('change', (e) => {
+    selectedGame = e.target.value;
+    updateDashSub();
+    render();
+  });
+
+  // ---------- Aggregation ----------
+  // Looks up the constant totalQuestions value a game logs with each entry (see Code.gs / game files).
+  // Used as the denominator for Score & 1st-Try Rate so a student who only reached part of a game
+  // that can end early (e.g. Answer Snake ending on a collision) shows e.g. 2/8 (25%), not 2/2 (100%).
+  function getGameTotalQuestions(gameName){
+    if(!gameName) return null;
+    for(const r of allRows){
+      if(r.game === gameName && r.totalQuestions !== '' && r.totalQuestions != null){
+        const n = Number(r.totalQuestions);
+        if(!isNaN(n) && n > 0) return n;
+      }
+    }
+    return null; // older data with no totalQuestions logged — callers fall back to attempted count
+  }
+
+  // ---------- Dynamic skill metadata (from live game data — no manual dashboard updates needed) ----------
+  // Games send their own skill label/definition/worked-example/deck-pointer with every logged row
+  // (see castle-builder-game-1b.html's `skillMeta` field). This rebuilds a lookup from whatever's
+  // currently in allRows, so a brand-new game/skill just works the moment it starts logging — no
+  // code change or redeploy here. The static `skillMeta` object below stays only as a fallback for
+  // older rows logged before a game started sending this field.
+  let dynamicSkillMeta = {};
+  function rebuildDynamicSkillMeta(){
+    dynamicSkillMeta = {};
+    allRows.forEach(r => {
+      if(!r.skillMeta) return;
+      const key = String(r.skill || '').trim().toLowerCase();
+      if(!key || dynamicSkillMeta[key]) return; // first hit is enough — content is constant per skill
+      try{
+        dynamicSkillMeta[key] = adaptSkillMeta(JSON.parse(r.skillMeta));
+      }catch(e){ /* malformed JSON — ignore, falls back to static/friendly name */ }
+    });
+  }
+  function adaptSkillMeta(raw){
+    // Accepts either the dashboard's own {title,badge,steps,workedPrompt,workedSteps} shape (the
+    // static fallback list below) or a game's own {label,definition,example,practice,deckPointer}
+    // shape sent live — normalizes either into the one shape renderReview/renderTracker expect.
+    if(raw.title || raw.steps || raw.workedSteps) return raw; // already dashboard-shaped
+    const example = Array.isArray(raw.example) ? raw.example : [];
+    return {
+      title: raw.label || null,
+      badge: raw.badge || '',
+      steps: raw.definition ? [raw.definition] : [],
+      workedPrompt: example[0] || '',
+      workedSteps: example.slice(1)
+    };
+  }
+  function getSkillMeta(key){
+    return dynamicSkillMeta[key] || skillMeta[key] || null;
+  }
+
+  function computeStudentStats(rows){
+    // Group each student's rows by playthrough (attemptId). Rows logged before attemptId existed
+    // (older data) all fall into one shared "legacy" bucket per student, so old data still renders
+    // sensibly as a single attempt rather than crashing or splitting oddly.
+    const byStudent = {};
+    rows.forEach(r => {
+      const name = r.student || 'Unknown';
+      if(!byStudent[name]) byStudent[name] = {};
+      const aid = r.attemptId || ('legacy-' + name);
+      if(!byStudent[name][aid]) byStudent[name][aid] = [];
+      byStudent[name][aid].push(r);
+    });
+
+    const students = {};
+    Object.keys(byStudent).forEach(name => {
+      const attemptGroups = byStudent[name];
+      const attemptSummaries = Object.keys(attemptGroups).map(aid => {
+        const arows = attemptGroups[aid];
+        const timestamps = arows.map(r => new Date(r.timestamp).getTime()).filter(t => !isNaN(t));
+        const startTs = timestamps.length ? Math.min(...timestamps) : 0;
+        const correctCount = arows.filter(r => r.correct === true || r.correct === 'TRUE' || r.correct === 'true').length;
+        return { attemptId: aid, rows: arows, startTs, correctCount, attempted: arows.length };
+      }).sort((a,b) => a.startTs - b.startTs); // chronological: [0] = first attempt, [last] = latest attempt
+
+      const firstAttempt = attemptSummaries[0];
+      const latestAttempt = attemptSummaries[attemptSummaries.length - 1];
+
+      // Skill breakdown, weakest skill, and time/activity stats all reflect the LATEST attempt only —
+      // that's the student's current standing, not blended with earlier (superseded) playthroughs.
+      const skills = {};
+      const timestamps = [];
+      latestAttempt.rows.forEach(r => {
+        const ts = new Date(r.timestamp).getTime();
+        if(!isNaN(ts)) timestamps.push(ts);
+        const skill = String(r.skill || 'other').trim().toLowerCase();
+        if(!skills[skill]) skills[skill] = { total:0, correct:0, wrong:0, attemptsList:[] };
+        const s = skills[skill];
+        s.total++;
+        const attemptsNum = (r.attempts === 'Timed out') ? 2 : Number(r.attempts) || 1;
+        s.attemptsList.push(attemptsNum);
+        if(r.correct === true || r.correct === 'TRUE' || r.correct === 'true'){ s.correct++; }
+        else { s.wrong++; }
+      });
+
+      students[name] = { skills, timestamps, attemptSummaries, firstAttempt, latestAttempt };
+    });
+    return students;
+  }
+
+  function studentSummary(name, data, gameTotal){
+    const latestCorrect = data.latestAttempt.correctCount;
+    const latestAttempted = data.latestAttempt.attempted;
+    const firstCorrect = data.firstAttempt.correctCount;
+    const firstAttempted = data.firstAttempt.attempted;
+
+    // Score & 1st-Try Rate denominator: the game's total POSSIBLE questions when known (gameTotal),
+    // not just how many the student happened to reach in that attempt — falls back to that attempt's
+    // attempted count for older logged data that predates the totalQuestions field.
+    const denom = (gameTotal && gameTotal > 0) ? gameTotal : latestAttempted;
+    const pct = denom ? (latestCorrect/denom*100) : 0; // "Latest Score" — most recent playthrough
+    const firstDenom = (gameTotal && gameTotal > 0) ? gameTotal : firstAttempted;
+    const firstTryRate = firstDenom ? (firstCorrect/firstDenom*100) : 0; // "1st-Try Rate" — first playthrough's score
+
+    let attemptsSum = 0;
+    Object.values(data.skills).forEach(s => { s.attemptsList.forEach(a => attemptsSum += a); });
+    const avgAttempts = latestAttempted ? (attemptsSum/latestAttempted) : 0;
+    const minTs = data.timestamps.length ? Math.min(...data.timestamps) : null;
+    const maxTs = data.timestamps.length ? Math.max(...data.timestamps) : null;
+    const spanSec = (minTs != null && maxTs != null) ? Math.max(1,(maxTs-minTs)/1000) : null;
+    const avgSecPerQ = (spanSec != null && latestAttempted > 1) ? spanSec/latestAttempted : null;
+    const isRushing = avgSecPerQ != null && avgSecPerQ < 10 && latestAttempted >= 3;
+    const isActive = maxTs != null && (Date.now() - maxTs) < 60000; // active if answered in last 60s
+    // weakest skill
+    let weakest = null, weakestPct = 101;
+    Object.keys(data.skills).forEach(sk => {
+      const s = data.skills[sk];
+      const p = s.total ? (s.correct/s.total*100) : 100;
+      if(p < weakestPct){ weakestPct = p; weakest = sk; }
+    });
+    return {
+      name, total: latestAttempted, denom, correct: latestCorrect, pct,
+      firstCorrect, firstDenom, firstTryRate,
+      avgAttempts, avgSecPerQ, isRushing, isActive, weakest, weakestPct, maxTs,
+      numAttempts: data.attemptSummaries.length, attemptSummaries: data.attemptSummaries
+    };
+  }
+
+  function tierFor(pct){
+    // pct = % gap (higher = worse), used for class chart and skill chips
+    if(pct >= 50) return 'red';
+    if(pct >= 20) return 'amber';
+    return 'green';
+  }
+
+  // ---------- Render: Gap chart ----------
+  function renderGapChart(students){
+    const skillStats = {}; // skill -> {gapCount, totalStudents}
+    Object.keys(skillMeta).forEach(k => { skillStats[k] = { gap:0, total:0 }; });
+    Object.values(students).forEach(data => {
+      Object.keys(data.skills).forEach(sk => {
+        if(!skillStats[sk]) skillStats[sk] = { gap:0, total:0 };
+        const s = data.skills[sk];
+        skillStats[sk].total++;
+        const hasGap = s.wrong > 0 || s.attemptsList.some(a => a >= 2);
+        if(hasGap) skillStats[sk].gap++;
+      });
+    });
+    const rows = Object.keys(skillStats)
+      .filter(k => skillStats[k].total > 0)
+      .map(k => ({ key:k, pct: skillStats[k].gap / skillStats[k].total * 100 }))
+      .sort((a,b) => b.pct - a.pct);
+
+    const card = document.getElementById('gapChartCard');
+    if(!rows.length){ card.innerHTML = '<div class="empty-state">No data logged for this session yet.</div>'; return; }
+    card.innerHTML = rows.map(r => {
+      const tier = tierFor(r.pct);
+      const label = (getSkillMeta(r.key) && getSkillMeta(r.key).title) || friendlySkillName(r.key);
+      return `<div class="gap-row">
+        <div class="gap-label">${label}</div>
+        <div class="gap-track"><div class="gap-fill ${tier}" style="width:${r.pct.toFixed(0)}%"></div></div>
+        <div class="gap-pct">${r.pct.toFixed(0)}%</div>
+      </div>`;
+    }).join('');
+    return rows;
+  }
+
+  // ---------- Render: Review cards ----------
+  function renderReview(gapRows){
+    const el = document.getElementById('reviewSection');
+    if(!gapRows || !gapRows.length){ el.innerHTML = '<div class="empty-state">No data logged for this session yet.</div>'; return; }
+    const needsReview = gapRows.filter(r => r.pct >= 20);
+    if(!needsReview.length){
+      el.innerHTML = '<div class="review-all-good">🎉 The whole class is doing well — no skills currently need a group review!</div>';
+      return;
+    }
+    el.innerHTML = '<div class="review-grid">' + needsReview.map(r => {
+      const meta = getSkillMeta(r.key) || { title: friendlySkillName(r.key), badge:'', steps:[] };
+      const tier = tierFor(r.pct);
+      const workedHtml = meta.workedPrompt ? `<div class="review-worked">
+        <div class="review-worked-label">📝 Worked example — use this to reteach</div>
+        <div class="review-worked-prompt">${meta.workedPrompt}</div>
+        <div class="review-worked-steps">${meta.workedSteps.join('\n')}</div>
+        ${meta.hasWalkDemo ? walkDemoHTML('review-'+r.key) : ''}
+      </div>` : '';
+      return `<div class="review-card ${tier}">
+        <div class="review-card-title">${meta.title}</div>
+        ${meta.badge ? `<div class="review-formula-badge">${meta.badge}</div>` : ''}
+        <ol class="review-steps">${meta.steps.map(s => `<li>${s}</li>`).join('')}</ol>
+        ${workedHtml}
+      </div>`;
+    }).join('') + '</div>';
+    needsReview.forEach(r => {
+      const meta = getSkillMeta(r.key);
+      if(meta && meta.hasWalkDemo) initWalkDemo('review-'+r.key);
+    });
+  }
+
+  // ---------- Render: Tracker table ----------
+  function sortStudents(list){
+    const { col, dir } = sortState;
+    const mul = dir === 'asc' ? 1 : -1;
+    const sorted = list.slice().sort((a,b) => {
+      let av, bv;
+      if(col === 'student'){ av = a.name.toLowerCase(); bv = b.name.toLowerCase(); return av < bv ? -1*mul : av > bv ? 1*mul : 0; }
+      if(col === 'firstTry'){ av = a.firstTryRate; bv = b.firstTryRate; }
+      else if(col === 'time'){ av = a.avgSecPerQ == null ? Infinity : a.avgSecPerQ; bv = b.avgSecPerQ == null ? Infinity : b.avgSecPerQ; }
+      else if(col === 'status'){ av = a.isActive ? 1 : 0; bv = b.isActive ? 1 : 0; }
+      else { // score: correct% desc, then avgAttempts asc (fewer attempts = more first-try wins) as tiebreak
+        if(a.pct !== b.pct) return (a.pct - b.pct) * mul;
+        return (b.avgAttempts - a.avgAttempts) * mul * -1;
+      }
+      return (av - bv) * mul;
+    });
+    return sorted;
+  }
+
+  function renderTracker(students){
+    const gameTotal = getGameTotalQuestions(selectedGame);
+    const list = Object.keys(students).map(name => studentSummary(name, students[name], gameTotal));
+    const tbody = document.getElementById('trackerBody');
+    if(!list.length){ tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No data logged for this session yet.</td></tr>'; return; }
+    const sorted = sortStudents(list);
+    const showRank = sortState.col === 'score';
+    const medals = ['🥇','🥈','🥉'];
+    const demoUids = [];
+    tbody.innerHTML = sorted.map((s,i) => {
+      const rankCell = showRank ? (medals[i] ? `<span class="rank-medal">${medals[i]}</span>` : (i+1)) : '•';
+      const statusHtml = s.isActive
+        ? '<span class="status-dot active"></span>Active'
+        : '<span class="status-dot idle"></span>Idle';
+      const timeHtml = s.avgSecPerQ != null ? s.avgSecPerQ.toFixed(1) + 's/q' : '—';
+      const rushBadge = s.isRushing ? '<span class="rush-badge">⚡</span>' : '';
+      const skillsHtml = Object.keys(students[s.name].skills).map(sk => {
+        const skdata = students[s.name].skills[sk];
+        // tier matches the same "gap" definition used everywhere else (wrong answer, or needed 2 attempts) —
+        // not a plain percentage threshold, so a single wrong answer correctly surfaces as a real gap here too
+        const hasWrong = skdata.wrong > 0;
+        const hasRetry = skdata.attemptsList.some(a => a >= 2);
+        const tier = hasWrong ? 'red' : (hasRetry ? 'amber' : 'green');
+        const meta = getSkillMeta(sk);
+        const title = (meta && meta.title) || friendlySkillName(sk);
+        let workedHtml = '';
+        if(tier !== 'green' && meta && meta.workedPrompt){
+          const uid = 'chip-' + sk + '-' + s.name.replace(/[^a-zA-Z0-9]/g,'_');
+          if(meta.hasWalkDemo) demoUids.push(uid);
+          workedHtml = `<div class="skill-chip-worked">
+          <div class="skill-chip-worked-label">📝 Reteach this 1:1</div>
+          <div class="skill-chip-worked-prompt">${meta.workedPrompt}</div>
+          <div class="skill-chip-worked-steps">${meta.workedSteps.join('\n')}</div>
+          ${meta.hasWalkDemo ? walkDemoHTML(uid) : ''}
+        </div>`;
+        }
+        return `<div class="skill-chip ${tier}"><div class="skill-chip-title">${title}</div>${skdata.correct}/${skdata.total} correct${workedHtml}</div>`;
+      }).join('');
+      const attemptHistoryHtml = s.numAttempts > 1 ? `<div class="attempt-history">
+          <div class="attempt-history-title">📜 Attempt history (${s.numAttempts})</div>
+          ${s.attemptSummaries.map((a, idx) => {
+            const denomForAttempt = gameTotal || a.attempted;
+            const pctForAttempt = denomForAttempt ? Math.round(a.correctCount/denomForAttempt*100) : 0;
+            const tag = idx === 0 ? '1st' : (idx === s.attemptSummaries.length-1 ? 'Latest' : ('#' + (idx+1)));
+            const dateStr = a.startTs ? new Date(a.startTs).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '';
+            return `<div class="attempt-history-item"><span class="ah-tag">${tag}</span><span class="ah-score">${a.correctCount}/${denomForAttempt} (${pctForAttempt}%)</span><span class="ah-date">${dateStr}</span></div>`;
+          }).join('')}
+        </div>` : '';
+      const rowId = 'row-' + s.name.replace(/[^a-zA-Z0-9]/g,'_');
+      const expanded = expandedStudents.has(s.name);
+      return `<tr class="tracker-row ${s.isActive?'':'idle'}" data-name="${s.name.replace(/"/g,'&quot;')}">
+          <td>${rankCell}</td>
+          <td>${s.name}</td>
+          <td>${s.correct}/${s.denom} (${s.pct.toFixed(0)}%)</td>
+          <td>${s.firstCorrect}/${s.firstDenom} (${s.firstTryRate.toFixed(0)}%)</td>
+          <td>${timeHtml}${rushBadge}</td>
+          <td>${statusHtml}</td>
+        </tr>
+        <tr class="skill-breakdown-row"><td colspan="6"><div class="skill-breakdown ${expanded?'show':''}" id="${rowId}">${attemptHistoryHtml}${skillsHtml}</div></td></tr>`;
+    }).join('');
+    demoUids.forEach(uid => initWalkDemo(uid));
+
+    tbody.querySelectorAll('.tracker-row').forEach(row => {
+      row.addEventListener('click', () => {
+        const name = row.dataset.name;
+        if(expandedStudents.has(name)) expandedStudents.delete(name); else expandedStudents.add(name);
+        renderTracker(students);
+      });
+    });
+
+    // update sort arrows
+    ['student','score','firstTry','time','status'].forEach(c => {
+      const arrow = document.getElementById('arrow-' + c);
+      if(!arrow) return;
+      arrow.textContent = (sortState.col === c) ? (sortState.dir === 'asc' ? '▲' : '▼') : '';
+    });
+  }
+
+  document.querySelectorAll('#trackerTable th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.sort;
+      if(col === 'rank') return;
+      if(sortState.col === col){ sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc'; }
+      else { sortState.col = col; sortState.dir = (col === 'time') ? 'asc' : 'desc'; }
+      render();
+    });
+  });
+
+  // ---------- Render: Needs support ----------
+  function renderSupport(students){
+    const gameTotal = getGameTotalQuestions(selectedGame);
+    // Live pass: anyone currently under 60% gets flagged (persists in localStorage from here on).
+    Object.keys(students).forEach(name => {
+      const s = studentSummary(name, students[name], gameTotal);
+      if(s.total > 0 && s.pct < 60) markFlagged(name);
+    });
+
+    const { entry } = getFlagEntry();
+    const visibleNames = entry.flagged.filter(name => !entry.dismissed.includes(name));
+    const el = document.getElementById('supportCard');
+    if(!visibleNames.length){ el.innerHTML = '<div class="empty-state">No one flagged yet.</div>'; return; }
+
+    // Show each flagged student's CURRENT stats (even if they've since improved) — the list itself
+    // doesn't shrink on its own; only "Mark as helped" removes someone.
+    const list = visibleNames.map(name => {
+      const data = students[name];
+      const s = data ? studentSummary(name, data, gameTotal) : null;
+      return { name, s };
+    });
+    list.sort((a,b) => {
+      const pa = a.s ? a.s.pct : -1, pb = b.s ? b.s.pct : -1;
+      return pa - pb;
+    });
+
+    el.innerHTML = '<div class="flag-list">' + list.map(({name, s}) => {
+      if(!s){
+        return `<div class="flag-item"><div class="fi-left"><span class="fi-name">${name}</span><span class="fi-detail">no data this session</span></div><button class="fi-help-btn" data-name="${name.replace(/"/g,'&quot;')}">✓ Mark as helped</button></div>`;
+      }
+      const weakTitle = s.weakest ? ((getSkillMeta(s.weakest) && getSkillMeta(s.weakest).title) || s.weakest) : '—';
+      const recoveredTag = s.pct >= 60 ? '<span class="fi-recovered">↑ improved</span>' : '';
+      return `<div class="flag-item">
+        <div class="fi-left">
+          <span class="fi-name">${name}</span>
+          <span class="fi-detail">${s.pct.toFixed(0)}% correct · weakest: ${weakTitle}</span>
+          ${recoveredTag}
+        </div>
+        <button class="fi-help-btn" data-name="${name.replace(/"/g,'&quot;')}">✓ Mark as helped</button>
+      </div>`;
+    }).join('') + '</div>';
+
+    el.querySelectorAll('.fi-help-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        markDismissed(btn.dataset.name);
+        renderSupport(students);
+      });
+    });
+  }
+
+  // ---------- Render: Possibly rushing ----------
+  function renderRushing(students){
+    const gameTotal = getGameTotalQuestions(selectedGame);
+    const list = Object.keys(students).map(name => studentSummary(name, students[name], gameTotal)).filter(s => s.isRushing);
+    list.sort((a,b) => a.avgSecPerQ - b.avgSecPerQ);
+    const el = document.getElementById('rushCard');
+    if(!list.length){ el.innerHTML = '<div class="empty-state">No one flagged yet.</div>'; return; }
+    el.innerHTML = '<div class="flag-list">' + list.map(s => {
+      return `<div class="flag-item"><span class="fi-name">⚡ ${s.name}</span><span class="fi-detail">${s.avgSecPerQ.toFixed(1)}s/question · ${s.correct}/${s.denom} (${s.pct.toFixed(0)}%)</span></div>`;
+    }).join('') + '</div>';
+  }
+
+  // ---------- Render: Unassigned attempts ----------
+  function renderUnassigned(rows){
+    const unassigned = rows.filter(r => (!r.session || String(r.session).trim() === '') && (!selectedGame || r.game === selectedGame));
+    const el = document.getElementById('unassignedCard');
+    if(!unassigned.length){ el.innerHTML = '<div class="empty-state">None.</div>'; return; }
+    const students = computeStudentStats(unassigned);
+    const list = Object.keys(students).map(name => studentSummary(name, students[name]));
+    el.innerHTML = '<div class="flag-list">' + list.map(s =>
+      `<div class="flag-item"><span class="fi-name">${s.name}</span><span class="fi-detail">${s.correct}/${s.total} logged with no session code</span></div>`
+    ).join('') + '</div>';
+  }
+
+  // ---------- Render: Manage log ----------
+  function renderManage(rows){
+    const el = document.getElementById('manageSection');
+    if(!rows.length){ el.innerHTML = '<div class="empty-state">No data logged for this session yet.</div>'; return; }
+    const byStudent = {};
+    rows.forEach(r => {
+      const name = r.student || 'Unknown';
+      if(!byStudent[name]) byStudent[name] = [];
+      byStudent[name].push(r);
+    });
+    el.innerHTML = Object.keys(byStudent).map(name => {
+      const entries = byStudent[name];
+      const correctCount = entries.filter(r => r.correct === true || r.correct === 'TRUE' || r.correct === 'true').length;
+      const id = 'manage-' + name.replace(/[^a-zA-Z0-9]/g,'_');
+      const expanded = expandedManage.has(name);
+      const rowsHtml = entries.map(r => {
+        const attemptsLabel = r.attempts === 'Timed out' ? 'Timed out' : (r.attempts + ' attempt' + (r.attempts == 1 ? '' : 's'));
+        const correctLabel = (r.correct === true || r.correct === 'TRUE' || r.correct === 'true') ? '✓' : '✗';
+        return `<div class="manage-row">
+          <span>${r.round || ''} · ${(getSkillMeta(String(r.skill||'').trim().toLowerCase()) && getSkillMeta(String(r.skill||'').trim().toLowerCase()).title) || friendlySkillName(r.skill)} · ${attemptsLabel} · ${correctLabel}</span>
+          <button class="manage-del-btn" data-rowid="${r.rowId}">Delete</button>
+        </div>`;
+      }).join('');
+      return `<div class="manage-student">
+        <div class="manage-student-head" data-name="${name.replace(/"/g,'&quot;')}">
+          <span><strong>${name}</strong> — ${entries.length} attempts, ${correctCount} correct</span>
+          <span>${expanded ? '▲' : '▼'}</span>
+        </div>
+        <div class="manage-student-rows ${expanded?'show':''}" id="${id}">${rowsHtml}</div>
+      </div>`;
+    }).join('');
+
+    el.querySelectorAll('.manage-student-head').forEach(head => {
+      head.addEventListener('click', () => {
+        const name = head.dataset.name;
+        if(expandedManage.has(name)) expandedManage.delete(name); else expandedManage.add(name);
+        renderManage(rows);
+      });
+    });
+    el.querySelectorAll('.manage-del-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const rowId = btn.dataset.rowid;
+        btn.disabled = true; btn.textContent = '…';
+        try{
+          await fetch(BACKEND_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'delete', rowId })
+          });
+        }catch(err){ /* fail silently, next poll will resync */ }
+        fetchRows();
+      });
+    });
+  }
+
+  // ---------- Main render ----------
+  function render(){
+    const sessionRows = activeSession
+      ? allRows.filter(r => String(r.session) === String(activeSession) && (!selectedGame || r.game === selectedGame))
+      : [];
+    const students = computeStudentStats(sessionRows);
+    const gapRows = renderGapChart(students);
+    renderReview(gapRows);
+    renderTracker(students);
+    renderSupport(students);
+    renderRushing(students);
+    renderUnassigned(allRows);
+    renderManage(sessionRows);
+  }
+
+  // ---------- Clear session modal ----------
+  document.getElementById('clearSessionBtn').addEventListener('click', () => {
+    document.getElementById('clearModal').classList.add('show');
+    document.getElementById('clearConfirmInput').value = '';
+    document.getElementById('clearConfirmBtn').disabled = true;
+  });
+  document.getElementById('clearCancelBtn').addEventListener('click', () => {
+    document.getElementById('clearModal').classList.remove('show');
+  });
+  document.getElementById('clearModal').addEventListener('click', (e) => {
+    if(e.target.id === 'clearModal') document.getElementById('clearModal').classList.remove('show');
+  });
+  document.getElementById('clearConfirmInput').addEventListener('input', (e) => {
+    document.getElementById('clearConfirmBtn').disabled = e.target.value !== 'CLEAR';
+  });
+  document.getElementById('clearConfirmBtn').addEventListener('click', async () => {
+    if(document.getElementById('clearConfirmInput').value !== 'CLEAR') return;
+    try{
+      await fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'clearSession', session: activeSession })
+      });
+    }catch(err){ /* ignore */ }
+    clearFlagsForSession(activeSession);
+    document.getElementById('clearModal').classList.remove('show');
+    fetchRows();
+  });
+
+  // ---------- Sample data (preview only — for checking layout/logic before wiring a real backend) ----------
+  function buildSampleRows(){
+    const rows = [];
+    let idCounter = 1;
+    const NOW = Date.now();
+    // minutesAgo lets us fabricate a believable chronological order for replay demos
+    function add(session, student, game, round, skill, attempts, correct, totalQuestions, attemptId, minutesAgo, skillMetaObj){
+      rows.push({
+        timestamp: new Date(NOW - (minutesAgo || 0) * 60000).toISOString(),
+        rowId: 'sample-' + (idCounter++),
+        session, student, game, round, skill, attempts, correct, totalQuestions, attemptId,
+        skillMeta: skillMetaObj ? JSON.stringify(skillMetaObj) : ''
+      });
+    }
+
+    const SESSION = '482910';
+
+    // Game 1: Castle Builder Part 1B — 19 total questions
+    const cb = { game: 'Castle Builder Part 1B', total: 19 };
+    add(SESSION, 'Alex Tan', cb.game, 'Q1', 'func', 1, true, cb.total, 'alex-cb-1', 8);
+    add(SESSION, 'Alex Tan', cb.game, 'Q2', 'func', 1, true, cb.total, 'alex-cb-1', 8);
+    add(SESSION, 'Alex Tan', cb.game, 'Q3', 'func', 2, true, cb.total, 'alex-cb-1', 7);
+    add(SESSION, 'Alex Tan', cb.game, 'Q7', 'stmteq', 1, true, cb.total, 'alex-cb-1', 7);
+    add(SESSION, 'Alex Tan', cb.game, 'Q8', 'stmteq', 2, false, cb.total, 'alex-cb-1', 6);
+    add(SESSION, 'Alex Tan', cb.game, 'Q14', 'linear', 1, true, cb.total, 'alex-cb-1', 6);
+    add(SESSION, 'Alex Tan', cb.game, 'Q15', 'linear', 1, true, cb.total, 'alex-cb-1', 5);
+
+    add(SESSION, 'Beatrice Lim', cb.game, 'Q1', 'func', 1, true, cb.total, 'bea-cb-1', 9);
+    add(SESSION, 'Beatrice Lim', cb.game, 'Q2', 'func', 1, true, cb.total, 'bea-cb-1', 9);
+    add(SESSION, 'Beatrice Lim', cb.game, 'Q3', 'func', 1, true, cb.total, 'bea-cb-1', 8);
+    add(SESSION, 'Beatrice Lim', cb.game, 'Q7', 'stmteq', 1, true, cb.total, 'bea-cb-1', 8);
+    add(SESSION, 'Beatrice Lim', cb.game, 'Q8', 'stmteq', 1, true, cb.total, 'bea-cb-1', 7);
+    add(SESSION, 'Beatrice Lim', cb.game, 'Q14', 'linear', 1, true, cb.total, 'bea-cb-1', 7);
+    add(SESSION, 'Beatrice Lim', cb.game, 'Q17', 'linear', 2, true, cb.total, 'bea-cb-1', 6);
+
+    // Chris Ng plays Castle Builder TWICE — a rough first attempt, then resets and replays after
+    // getting help, doing much better. This demonstrates 1st-Try Rate (his first playthrough) vs
+    // Latest Score (his most recent one) genuinely differing, plus the attempt-history list.
+    add(SESSION, 'Chris Ng', cb.game, 'Q1', 'func', 2, true, cb.total, 'chris-cb-1', 40);
+    add(SESSION, 'Chris Ng', cb.game, 'Q2', 'func', 2, false, cb.total, 'chris-cb-1', 39);
+    add(SESSION, 'Chris Ng', cb.game, 'Q7', 'stmteq', 2, false, cb.total, 'chris-cb-1', 38);
+    // ^ Attempt 1 ("1st"): 1/19 correct, then Chris gave up and reset.
+    add(SESSION, 'Chris Ng', cb.game, 'Q1', 'func', 1, true, cb.total, 'chris-cb-2', 10);
+    add(SESSION, 'Chris Ng', cb.game, 'Q2', 'func', 1, true, cb.total, 'chris-cb-2', 9);
+    add(SESSION, 'Chris Ng', cb.game, 'Q3', 'func', 1, true, cb.total, 'chris-cb-2', 9);
+    add(SESSION, 'Chris Ng', cb.game, 'Q7', 'stmteq', 1, true, cb.total, 'chris-cb-2', 8);
+    add(SESSION, 'Chris Ng', cb.game, 'Q8', 'stmteq', 2, true, cb.total, 'chris-cb-2', 7);
+    // ^ Attempt 2 ("Latest"): 5/19 correct so far, still in progress.
+
+    // Game 2: Answer Snake — Coordinate Geometry — 8 total questions, but the snake can die
+    // early (wall/self collision), ending the run before every question is reached. This is the
+    // exact "2 correct out of 8 possible" scenario the Score/1st-Try-Rate fix is for.
+    const snake = { game: 'Answer Snake — Coordinate Geometry', total: 8 };
+    add(SESSION, 'Alex Tan', snake.game, 'Q1', 'cart', 1, true, snake.total, 'alex-snake-1', 4);
+    add(SESSION, 'Alex Tan', snake.game, 'Q2', 'coordx', 1, true, snake.total, 'alex-snake-1', 3);
+    // ^ Alex's snake hit a wall right after Q2 — only 2 of 8 questions were ever reached.
+    // Score and 1st-Try Rate should both read 2/8 (25%), not 2/2 (100%).
+
+    add(SESSION, 'Beatrice Lim', snake.game, 'Q1', 'cart', 1, true, snake.total, 'bea-snake-1', 5);
+    add(SESSION, 'Beatrice Lim', snake.game, 'Q2', 'coordx', 1, true, snake.total, 'bea-snake-1', 5);
+    add(SESSION, 'Beatrice Lim', snake.game, 'Q3', 'hunt', 1, true, snake.total, 'bea-snake-1', 4);
+    add(SESSION, 'Beatrice Lim', snake.game, 'Q4', 'plotb', 2, true, snake.total, 'bea-snake-1', 4);
+    add(SESSION, 'Beatrice Lim', snake.game, 'Q5', 'cart', 1, true, snake.total, 'bea-snake-1', 3);
+    add(SESSION, 'Beatrice Lim', snake.game, 'Q6', 'coordx', 1, true, snake.total, 'bea-snake-1', 3);
+    add(SESSION, 'Beatrice Lim', snake.game, 'Q7', 'hunt', 1, true, snake.total, 'bea-snake-1', 2);
+    add(SESSION, 'Beatrice Lim', snake.game, 'Q8', 'plotb', 1, true, snake.total, 'bea-snake-1', 2);
+
+    add(SESSION, 'Chris Ng', snake.game, 'Q1', 'cart', 1, true, snake.total, 'chris-snake-1', 3);
+    add(SESSION, 'Chris Ng', snake.game, 'Q2', 'coordx', 2, false, snake.total, 'chris-snake-1', 3);
+    add(SESSION, 'Chris Ng', snake.game, 'Q3', 'hunt', 1, true, snake.total, 'chris-snake-1', 2);
+    add(SESSION, 'Chris Ng', snake.game, 'Q4', 'plotb', 2, false, snake.total, 'chris-snake-1', 2);
+    add(SESSION, 'Chris Ng', snake.game, 'Q5', 'cart', 1, true, snake.total, 'chris-snake-1', 1);
+    // ^ Chris's snake hit a wall right after Q5 — 5 of 8 questions reached.
+
+    // Game 3: a brand-new game/skill with NO entry anywhere in this dashboard's code — this is the
+    // proof that "What The Class Should Review" needs zero manual updates. Its label/definition/
+    // worked-example is attached to the row exactly the way a real game sends it.
+    const revPct = { game: 'Cafe Simulator — Reverse Percentages', total: 10 };
+    const revPctMeta = {
+      label: 'Reverse Percentages',
+      definition: 'When you know the value AFTER a % increase or decrease, work backwards: set the original amount as 100%, figure out what % the given value represents, then divide to find 1% before scaling back up to 100%.',
+      example: [
+        'A price after a 20% discount is $64. Find the original price.',
+        '100% − 20% = 80%, so $64 represents 80%',
+        '1% = $64 ÷ 80 = $0.80',
+        '100% = $0.80 × 100 = $80'
+      ],
+      practice: { prompt: 'After a 10% increase, a stall\'s daily sales are $110. Find the original sales.', accept: ['100'], hint: '110 represents what percentage of the original?' },
+      deckPointer: 'Revisit Learning Deck: Reverse Percentages'
+    };
+    add(SESSION, 'Alex Tan', revPct.game, 'Q1', 'reversepct', 1, false, revPct.total, 'alex-rp-1', 2, revPctMeta);
+    add(SESSION, 'Alex Tan', revPct.game, 'Q2', 'reversepct', 2, false, revPct.total, 'alex-rp-1', 1, revPctMeta);
+    add(SESSION, 'Beatrice Lim', revPct.game, 'Q1', 'reversepct', 1, true, revPct.total, 'bea-rp-1', 2, revPctMeta);
+    add(SESSION, 'Beatrice Lim', revPct.game, 'Q2', 'reversepct', 2, false, revPct.total, 'bea-rp-1', 1, revPctMeta);
+
+    return { rows, session: SESSION };
+  }
+  document.getElementById('loadSampleBtn').addEventListener('click', () => {
+    const { rows, session } = buildSampleRows();
+    allRows = rows;
+    activeSession = session;
+    localStorage.setItem(SESSION_STORAGE_KEY, session);
+    updateSessionDisplay();
+    rebuildDynamicSkillMeta();
+    updateGameFilterOptions();
+    document.getElementById('pollStatus').textContent = '🎨 Showing sample data — not from a real backend. Paste your Apps Script URL in and reload to go live.';
+    render();
+  });
+
+  // ---------- Poll ----------
+  fetchRows();
+  setInterval(fetchRows, 5000);
+</script>
+</body>
+</html>
