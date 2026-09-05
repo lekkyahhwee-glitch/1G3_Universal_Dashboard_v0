@@ -596,7 +596,10 @@
   });
 
   // ---------- Fetch ----------
+  let sampleModeActive = false;
+
   async function fetchRows(){
+    if(sampleModeActive) return; // preview mode — don't let live polling clobber the sample data
     if(!BACKEND_URL || BACKEND_URL.indexOf('PASTE_YOUR') === 0){
       document.getElementById('pollStatus').textContent = 'Backend not configured yet — paste your Apps Script URL into this file.';
       return;
@@ -1237,16 +1240,36 @@
 
     return { rows, session: SESSION };
   }
+  let sessionBeforeSample = null;
   document.getElementById('loadSampleBtn').addEventListener('click', () => {
-    const { rows, session } = buildSampleRows();
-    allRows = rows;
-    activeSession = session;
-    localStorage.setItem(SESSION_STORAGE_KEY, session);
-    updateSessionDisplay();
-    rebuildDynamicSkillMeta();
-    updateGameFilterOptions();
-    document.getElementById('pollStatus').textContent = '🎨 Showing sample data — not from a real backend. Paste your Apps Script URL in and reload to go live.';
-    render();
+    const btn = document.getElementById('loadSampleBtn');
+    sampleModeActive = !sampleModeActive;
+
+    if(sampleModeActive){
+      sessionBeforeSample = activeSession; // remember the real session so we can restore it on exit
+      const { rows, session } = buildSampleRows();
+      allRows = rows;
+      activeSession = session;
+      updateSessionDisplay();
+      rebuildDynamicSkillMeta();
+      updateGameFilterOptions();
+      document.getElementById('pollStatus').textContent = '🎨 Showing sample data — live polling paused. Click again to exit and resume live data.';
+      btn.textContent = '🚫 Exit Sample Data';
+      btn.style.background = 'var(--coral)';
+      btn.style.color = '#fff';
+      btn.style.borderColor = 'var(--coral)';
+      render();
+    } else {
+      activeSession = sessionBeforeSample || '';
+      if(activeSession) localStorage.setItem(SESSION_STORAGE_KEY, activeSession);
+      updateSessionDisplay();
+      btn.textContent = '🎨 Load Sample Data';
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+      document.getElementById('pollStatus').textContent = 'Resuming live polling…';
+      fetchRows(); // immediately pull real data instead of waiting for the next 5s tick
+    }
   });
 
   // ---------- Poll ----------
